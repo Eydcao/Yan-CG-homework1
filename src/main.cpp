@@ -26,6 +26,12 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
     // TODO: Implement this function
     // Create the model matrix for rotating the triangle around the Z axis.
     // Then return it.
+    float sinT = std::sin(rotation_angle / 180.0 * MY_PI);
+    float cosT = std::cos(rotation_angle / 180.0 * MY_PI);
+    model(0, 0) = cosT;
+    model(0, 1) = -sinT;
+    model(1, 0) = sinT;
+    model(1, 1) = cosT;
 
     return model;
 }
@@ -41,6 +47,35 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     // Create the projection matrix for the given parameters.
     // Then return it.
 
+    // calculate r l n f t b
+    double r, l, n, f, t, b;
+    n = zNear;
+    f = zFar;
+    t = std::abs(n) * std::tan(eye_fov / 2.0 / 180.0 * MY_PI);
+    b = -t;
+    r = t * aspect_ratio;
+    l = -r;
+    // first calculate ortho projection
+    Eigen::Matrix4f OScale = Eigen::Matrix4f::Identity();
+    OScale(0, 0) = 2.0 / (r - l);
+    OScale(1, 1) = 2.0 / (t - b);
+    OScale(2, 2) = 2.0 / (n - f);
+    Eigen::Matrix4f OTranslate = Eigen::Matrix4f::Identity();
+    OTranslate(0, 3) = -(r + l) / 2.0;
+    OTranslate(1, 3) = -(t + b) / 2.0;
+    OTranslate(2, 3) = -(n + f) / 2.0;
+    Eigen::Matrix4f O = OScale * OTranslate;
+    // then transform from perspective to ortho
+    Eigen::Matrix4f PToO = Eigen::Matrix4f::Identity();
+    PToO(0, 0) = n;
+    PToO(1, 1) = n;
+    PToO(2, 2) = n + f;
+    PToO(2, 3) = -n * f;
+    PToO(3, 2) = 1.0;
+    PToO(3, 3) = 0.0;
+    // times
+    projection = O * PToO;
+    // return
     return projection;
 }
 
@@ -58,8 +93,8 @@ int main(int argc, const char **argv)
         {
             filename = std::string(argv[3]);
         }
-        else
-            return 0;
+        // else
+        //     return 0;
     }
 
     rst::rasterizer r(700, 700);
@@ -82,7 +117,9 @@ int main(int argc, const char **argv)
 
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
+        // znear and far must be negetive, otherwise the tri is not in the
+        // frustum
+        r.set_projection(get_projection_matrix(45, 1, -0.1, -50));
 
         r.draw(pos_id, ind_id, rst::Primitive::Triangle);
         cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
@@ -99,7 +136,9 @@ int main(int argc, const char **argv)
 
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
+        // znear and far must be negetive, otherwise the tri is not in the
+        // frustum
+        r.set_projection(get_projection_matrix(45, 1, -0.1, -50));
 
         r.draw(pos_id, ind_id, rst::Primitive::Triangle);
 
