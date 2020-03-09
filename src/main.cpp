@@ -19,6 +19,26 @@ Eigen::Matrix4f get_view_matrix(Eigen::Vector3f eye_pos)
     return view;
 }
 
+Eigen::Matrix4f get_rotation(Vector3f a, float angle)
+{
+    Eigen::Vector3f axis = a.normalized();
+    Eigen::Matrix3f r = Eigen::Matrix3f::Zero();
+    r = r + std::cos(angle / 180.0 * MY_PI) * Eigen::Matrix3f::Identity();
+    Eigen::Matrix3f tensorNN;
+    tensorNN << axis(0) * axis(0), axis(0) * axis(1), axis(0) * axis(2),
+        axis(1) * axis(0), axis(1) * axis(1), axis(1) * axis(2),
+        axis(2) * axis(0), axis(2) * axis(1), axis(2) * axis(2);
+    r = r + (1.0 - std::cos(angle / 180.0 * MY_PI)) * tensorNN;
+    Eigen::Matrix3f offDiag;
+    offDiag << 0, -axis(2), axis(1), axis(2), 0, -axis(0), -axis(1), axis(0), 0;
+    r = r + std::sin(angle / 180.0 * MY_PI) * offDiag;
+
+    Eigen::Matrix4f R;
+    R << r(0, 0), r(0, 1), r(0, 2), 0, r(1, 0), r(1, 1), r(1, 2), 0, r(2, 0),
+        r(2, 1), r(2, 2), 0, 0, 0, 0, 1;
+    return R;
+}
+
 Eigen::Matrix4f get_model_matrix(float rotation_angle)
 {
     Eigen::Matrix4f model = Eigen::Matrix4f::Identity();
@@ -81,6 +101,13 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
 
 int main(int argc, const char **argv)
 {
+    // test diy rotation function
+    // Eigen::Vector3f diyAxis(1, 0, 0);
+    // float diyTheta = 30;
+    // std::cout << " diy rotation matrix is \n"
+    //           << get_rotation(diyAxis, diyTheta);
+    // exit(0);
+
     float angle = 0;
     bool command_line = false;
     std::string filename = "output.png";
