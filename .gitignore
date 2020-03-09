@@ -1,0 +1,7 @@
+.vs/
+.vscode/
+bin/
+build/
+othersBackup/
+*.exe
+*.bmp
