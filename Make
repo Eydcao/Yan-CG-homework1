@@ -1,18 +1,8 @@
-#!/bin/bash
 cd ${0%/*} || exit 1    # Run from this directory
 
 mkdir bin
 mkdir build
 cd build
-
-if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-    echo "Detected plattform: Linux"
-    cmake ..
-    make -j$(nproc)
-    cd ..
-#    ./bin/testShonDy
-elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ] || [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
-    echo "Detected plattform: Win"
-    cmake .. -G "Visual Studio 16 2019"
-    cmake --build . --config Release
-fi
+cmake ..
+make -j$(nproc)
+cd ..
